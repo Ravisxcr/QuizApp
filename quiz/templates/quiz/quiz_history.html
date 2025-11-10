@@ -1,0 +1,146 @@
+{% extends 'quiz/base.html' %}
+{% load quiz_extras %}
+
+{% block title %}Quiz History - Quiz App{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h4><i class="fas fa-history"></i> Your Quiz History</h4>
+            </div>
+            <div class="card-body">
+                {% if page_obj %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Quiz</th>
+                                    <th>Chapter</th>
+                                    <th>Book</th>
+                                    <th>Score</th>
+                                    <th>Questions</th>
+                                    <th>Date</th>
+                                    <th>Duration</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for quiz in page_obj %}
+                                <tr>
+                                    <td>
+                                        {{ quiz.title }}
+                                        {% if quiz.get_quiz_type == 'book' %}
+                                            <small class="badge bg-primary ms-1">Book Quiz</small>
+                                        {% else %}
+                                            <small class="badge bg-success ms-1">Chapter Quiz</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if quiz.chapter %}
+                                            {{ quiz.chapter.title }}
+                                        {% else %}
+                                            <em class="text-muted">All Chapters</em>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if quiz.book %}
+                                            {{ quiz.book.title }}
+                                        {% elif quiz.chapter %}
+                                            {{ quiz.chapter.book.title }}
+                                        {% else %}
+                                            <em class="text-muted">Unknown</em>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if quiz.score %}
+                                            <span class="badge bg-{% if quiz.score >= 80 %}success{% elif quiz.score >= 60 %}warning{% else %}danger{% endif %}">
+                                                {{ quiz.score|floatformat:0 }}%
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if quiz.is_completed %}
+                                            {{ quiz.correct_answers }}/{{ quiz.total_questions }}
+                                        {% else %}
+                                            {{ quiz.total_questions }} total
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ quiz.start_time|date:"M d, Y" }}</td>
+                                    <td>
+                                        {% if quiz.end_time and quiz.start_time %}
+                                            {{ quiz.start_time|duration_display:quiz.end_time }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'quiz:quiz_results' quiz.id %}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i> View
+                                        </a>
+                                        {% if quiz.book %}
+                                            <a href="{% url 'quiz:start_book_quiz' quiz.book.id %}" class="btn btn-sm btn-outline-success">
+                                                <i class="fas fa-redo"></i> Retake
+                                            </a>
+                                        {% elif quiz.chapter %}
+                                            <a href="{% url 'quiz:start_quiz' quiz.chapter.id %}" class="btn btn-sm btn-outline-success">
+                                                <i class="fas fa-redo"></i> Retake
+                                            </a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    {% if page_obj.has_other_pages %}
+                    <nav aria-label="Quiz history pagination">
+                        <ul class="pagination justify-content-center">
+                            {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page=1">First</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                                </li>
+                            {% endif %}
+                            
+                            <li class="page-item active">
+                                <span class="page-link">
+                                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                                </span>
+                            </li>
+                            
+                            {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Last</a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+                    
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No quiz history yet</h5>
+                        <p class="text-muted">Take your first quiz to see your progress here.</p>
+                        <a href="{% url 'quiz:quiz_list' %}" class="btn btn-primary">
+                            <i class="fas fa-play"></i> Take a Quiz
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

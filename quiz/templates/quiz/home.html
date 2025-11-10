@@ -1,0 +1,143 @@
+{% extends 'quiz/base.html' %}
+
+{% block title %}Home - Quiz App{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="jumbotron bg-light p-5 rounded">
+            <h1 class="display-4"><i class="fas fa-brain"></i> Welcome to Quiz App</h1>
+            <p class="lead">Create books, add chapters, upload questions via JSON, and take interactive quizzes!</p>
+            <hr class="my-4">
+            <p>This application allows you to manage books and chapters, upload questions in JSON format, and take quizzes with history tracking.</p>
+            {% if not user.is_authenticated %}
+            <a class="btn btn-primary btn-lg" href="{% url 'quiz:login' %}" role="button">
+                <i class="fas fa-sign-in-alt"></i> Login to Get Started
+            </a>
+            {% else %}
+            <a class="btn btn-primary btn-lg" href="{% url 'quiz:quiz_list' %}" role="button">
+                <i class="fas fa-play"></i> Take a Quiz
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-book"></i> Books
+            </div>
+            <div class="card-body text-center">
+                <h2 class="card-title">{{ total_books }}</h2>
+                <p class="card-text">Total books in the system</p>
+                <a href="{% url 'quiz:books_list' %}" class="btn btn-primary">
+                    <i class="fas fa-list"></i> View Books
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-bookmark"></i> Chapters
+            </div>
+            <div class="card-body text-center">
+                <h2 class="card-title">{{ total_chapters }}</h2>
+                <p class="card-text">Total chapters available</p>
+                <a href="{% url 'quiz:add_chapter' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Add Chapter
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-question-circle"></i> Questions
+            </div>
+            <div class="card-body text-center">
+                <h2 class="card-title">{{ total_questions }}</h2>
+                <p class="card-text">Total questions available</p>
+                <a href="{% url 'quiz:upload_questions' %}" class="btn btn-primary">
+                    <i class="fas fa-upload"></i> Upload Questions
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-rocket"></i> Quick Actions
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <a href="{% url 'quiz:add_book' %}" class="btn btn-outline-primary btn-block w-100 mb-2">
+                            <i class="fas fa-book"></i><br>Add New Book
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{% url 'quiz:add_chapter' %}" class="btn btn-outline-primary btn-block w-100 mb-2">
+                            <i class="fas fa-bookmark"></i><br>Add New Chapter
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{% url 'quiz:upload_questions' %}" class="btn btn-outline-primary btn-block w-100 mb-2">
+                            <i class="fas fa-upload"></i><br>Upload Questions
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        {% if user.is_authenticated %}
+                        <a href="{% url 'quiz:quiz_list' %}" class="btn btn-outline-success btn-block w-100 mb-2">
+                            <i class="fas fa-play"></i><br>Take Quiz
+                        </a>
+                        {% else %}
+                        <a href="{% url 'quiz:login' %}" class="btn btn-outline-success btn-block w-100 mb-2">
+                            <i class="fas fa-sign-in-alt"></i><br>Login First
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-info-circle"></i> How to Use
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5><i class="fas fa-cog"></i> Setup (Admin)</h5>
+                        <ol>
+                            <li>Add books using the "Add Book" form</li>
+                            <li>Add chapters to books using "Add Chapter"</li>
+                            <li>Upload questions in JSON format to chapters</li>
+                        </ol>
+                    </div>
+                    <div class="col-md-6">
+                        <h5><i class="fas fa-user"></i> Taking Quizzes</h5>
+                        <ol>
+                            <li>Login to your account</li>
+                            <li>Browse available chapters with questions</li>
+                            <li>Select quiz settings and start</li>
+                            <li>View your quiz history and results</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

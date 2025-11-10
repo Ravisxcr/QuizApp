@@ -1,0 +1,113 @@
+{% extends 'quiz/base.html' %}
+
+{% block title %}Books List - Quiz App{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h4><i class="fas fa-book"></i> All Books</h4>
+            </div>
+            <div class="card-body">
+                {% if books %}
+                    {% for book in books %}
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <h5 class="card-title">{{ book.title }}</h5>
+                                    <h6 class="card-subtitle mb-2 text-muted">by {{ book.author }}</h6>
+                                    {% if book.description %}
+                                    <p class="card-text">{{ book.description }}</p>
+                                    {% endif %}
+                                    <small class="text-muted">
+                                        <i class="fas fa-calendar"></i> Added on {{ book.created_at|date:"M d, Y" }}
+                                    </small>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="text-end">
+                                        <span class="badge bg-primary fs-6 mb-2">
+                                            {{ book.chapters.count }} chapters
+                                        </span>
+                                        <br>
+                                        <span class="badge bg-success fs-6">
+                                            {{ book.total_questions }} questions
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {% if book.chapters.exists %}
+                            <hr>
+                            <h6><i class="fas fa-bookmark"></i> Chapters:</h6>
+                            <div class="row">
+                                {% for chapter in book.chapters.all %}
+                                <div class="col-md-6 col-lg-4 mb-2">
+                                    <div class="card bg-light">
+                                        <div class="card-body py-2">
+                                            <h6 class="card-title mb-1">
+                                                Chapter {{ chapter.chapter_number }}: {{ chapter.title }}
+                                            </h6>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <small class="text-muted">
+                                                    {{ chapter.questions.count }} questions
+                                                </small>
+                                                <div class="btn-group btn-group-sm">
+                                                    {% if chapter.questions.count > 0 %}
+                                                    <a href="{% url 'quiz:start_quiz' chapter.id %}" class="btn btn-outline-primary btn-sm">
+                                                        <i class="fas fa-play"></i>
+                                                    </a>
+                                                    {% endif %}
+                                                    <a href="{% url 'quiz:chapter_questions' chapter.id %}" class="btn btn-outline-secondary btn-sm">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <div class="alert alert-info mt-2">
+                                <i class="fas fa-info-circle"></i> No chapters added yet.
+                                <a href="{% url 'quiz:add_chapter' %}" class="btn btn-sm btn-primary ms-2">
+                                    <i class="fas fa-plus"></i> Add Chapter
+                                </a>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-book fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No books available</h5>
+                        <p class="text-muted">Start by adding your first book.</p>
+                        <a href="{% url 'quiz:add_book' %}" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Add Book
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="text-center">
+            <a href="{% url 'quiz:add_book' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Add New Book
+            </a>
+            <a href="{% url 'quiz:add_chapter' %}" class="btn btn-secondary">
+                <i class="fas fa-bookmark"></i> Add Chapter
+            </a>
+            <a href="{% url 'quiz:upload_questions' %}" class="btn btn-success">
+                <i class="fas fa-upload"></i> Upload Questions
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,367 @@
+{% extends 'quiz/base.html' %}
+{% load quiz_extras %}
+
+{% block title %}Quiz - Question {{ question_number }} - Quiz App{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Main Quiz Area -->
+    <div class="col-md-8">
+        <!-- Timer and Status Bar -->
+        <div class="card mb-3">
+            <div class="card-body py-2">
+                <div class="row align-items-center">
+                    <div class="col-md-4">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-clock text-warning me-2"></i>
+                            <div>
+                                <div id="timer" class="fw-bold text-warning">Loading...</div>
+                                <small class="text-muted">Time Remaining</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <small class="text-muted">{{ quiz.title }}</small><br>
+                        <small class="fw-bold">Question {{ question_number }} of {{ total_questions }}</small>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <div class="d-flex justify-content-end gap-3">
+                            <div class="text-center">
+                                <div class="badge bg-success">{{ attempted_count }}</div>
+                                <small class="text-muted d-block">Attempted</small>
+                            </div>
+                            <div class="text-center">
+                                <div class="badge bg-warning">{{ marked_count }}</div>
+                                <small class="text-muted d-block">Marked</small>
+                            </div>
+                            <div class="text-center">
+                                <div class="badge bg-secondary">{{ unattempted_count }}</div>
+                                <small class="text-muted d-block">Unattempted</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="progress mt-2" style="height: 6px;">
+                    <div class="progress-bar" role="progressbar" style="width: {{ progress }}%"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Question Card -->
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-question-circle"></i> Question {{ question_number }}
+                    </h5>
+                    <div>
+                        <span class="badge bg-{% if question.difficulty == 'easy' %}success{% elif question.difficulty == 'medium' %}warning{% else %}danger{% endif %}">
+                            {{ question.get_difficulty_display }}
+                        </span>
+                        {% if question.id in question_statuses %}
+                            {% if question_statuses|get_item:question.id == 'marked_for_review' %}
+                                <span class="badge bg-warning"><i class="fas fa-flag"></i> Marked</span>
+                            {% elif question_statuses|get_item:question.id == 'answered_and_marked' %}
+                                <span class="badge bg-info"><i class="fas fa-check-flag"></i> Answered & Marked</span>
+                            {% elif question_statuses|get_item:question.id == 'attempted' %}
+                                <span class="badge bg-success"><i class="fas fa-check"></i> Attempted</span>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <h6 class="mb-4">{{ question.question_text }}</h6>
+                
+                <form id="quizForm" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" id="formAction" value="next">
+                    
+                    <div class="mb-4">
+                        {% for key, option in question.options.items %}
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" name="answer" value="{{ key }}" id="option{{ key }}" 
+                                   {% if current_answer and current_answer.user_answer == key %}checked{% endif %}>
+                            <label class="form-check-label" for="option{{ key }}">
+                                <strong>{{ key }}.</strong> {{ option }}
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            {% if question_number > 1 %}
+                            <button type="button" class="btn btn-outline-secondary" onclick="navigatePrevious()">
+                                <i class="fas fa-arrow-left"></i> Previous
+                            </button>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-outline-danger" onclick="clearSelection()" title="Clear your selected answer for this question">
+                                <i class="fas fa-eraser"></i> Clear Selection
+                            </button>
+                            
+                            <button type="button" class="btn btn-warning" onclick="markForReview()" title="Mark this question for review later">
+                                <i class="fas fa-flag"></i> Mark for Review
+                            </button>
+                            
+                            {% if question_number < total_questions %}
+                            <button type="button" class="btn btn-outline-primary" onclick="saveAndNext()" title="Save your answer and move to the next question">
+                                Save & Next <i class="fas fa-arrow-right"></i>
+                            </button>
+                            {% endif %}
+                            
+                            <button type="submit" class="btn btn-primary" title="{% if question_number < total_questions %}Move to the next question{% else %}Complete and submit the quiz{% endif %}">
+                                {% if question_number < total_questions %}
+                                    Next <i class="fas fa-arrow-right"></i>
+                                {% else %}
+                                    Finish Quiz <i class="fas fa-flag-checkered"></i>
+                                {% endif %}
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Question Navigation Sidebar -->
+    <div class="col-md-4">
+        <div class="card sticky-top" style="top: 20px;">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-list"></i> Question Navigation</h6>
+            </div>
+            <div class="card-body">
+                <div class="row g-2">
+                    {% for question_id in question_ids %}
+                    <div class="col-3">
+                        <button type="button" 
+                                class="btn btn-sm w-100 question-nav-btn 
+                                       {% if forloop.counter0 == current_index %}btn-primary
+                                       {% elif question_id in question_statuses %}
+                                           {% if question_statuses|get_item:question_id == 'attempted' %}btn-success
+                                           {% elif question_statuses|get_item:question_id == 'marked_for_review' %}btn-warning
+                                           {% elif question_statuses|get_item:question_id == 'answered_and_marked' %}btn-info
+                                           {% else %}btn-outline-secondary{% endif %}
+                                       {% else %}btn-outline-secondary{% endif %}"
+                                onclick="navigateToQuestion({{ forloop.counter0 }})">
+                            {{ forloop.counter }}
+                        </button>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <hr>
+                
+                <div class="row text-center g-2">
+                    <div class="col-12">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <span class="badge bg-success">■</span>
+                            <small>Attempted ({{ attempted_count }})</small>
+                        </div>
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <span class="badge bg-warning">■</span>
+                            <small>Marked for Review ({{ marked_count }})</small>
+                        </div>
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <span class="badge bg-info">■</span>
+                            <small>Answered & Marked</small>
+                        </div>
+                        <div class="d-flex align-items-center justify-content-between">
+                            <span class="badge bg-secondary">■</span>
+                            <small>Unattempted ({{ unattempted_count }})</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="d-grid">
+                    <button type="button" class="btn btn-danger" onclick="submitQuiz()">
+                        <i class="fas fa-stop"></i> Submit Quiz
+                    </button>
+                </div>
+                
+                <div class="mt-3">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle"></i> 
+                        <strong>Tip:</strong> Use "Save & Next" to move forward with confidence, or "Mark for Review" to flag questions for later.
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Quiz timer
+let startTime = new Date('{{ quiz.start_time|date:"c" }}');
+let durationMinutes = {{ quiz.duration_minutes }};
+let endTime = new Date(startTime.getTime() + durationMinutes * 60000);
+let allowPageLeave = false; // Flag to control page leave warning
+
+function updateTimer() {
+    let now = new Date();
+    let timeLeft = endTime.getTime() - now.getTime();
+    
+    if (timeLeft <= 0) {
+        document.getElementById('timer').innerHTML = '<span class="text-danger">Time Up!</span>';
+        // Auto-submit quiz
+        allowPageLeave = true;
+        submitQuiz();
+        return;
+    }
+    
+    let hours = Math.floor(timeLeft / (1000 * 60 * 60));
+    let minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+    let seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+    
+    let display = '';
+    if (hours > 0) {
+        display = hours + ':' + (minutes < 10 ? '0' : '') + minutes + ':' + (seconds < 10 ? '0' : '') + seconds;
+    } else {
+        display = minutes + ':' + (seconds < 10 ? '0' : '') + seconds;
+    }
+    
+    document.getElementById('timer').textContent = display;
+    
+    // Change color when time is running low
+    if (timeLeft < 5 * 60000) { // Less than 5 minutes
+        document.getElementById('timer').className = 'fw-bold text-danger';
+    } else if (timeLeft < 10 * 60000) { // Less than 10 minutes
+        document.getElementById('timer').className = 'fw-bold text-warning';
+    }
+}
+
+// Update timer every second
+setInterval(updateTimer, 1000);
+updateTimer();
+
+// Form submission functions
+function markForReview() {
+    allowPageLeave = true; // Allow navigation for this action
+    document.getElementById('formAction').value = 'mark_for_review';
+    document.getElementById('quizForm').submit();
+}
+
+function saveAndNext() {
+    const selectedAnswer = document.querySelector('input[name="answer"]:checked');
+    if (selectedAnswer) {
+        allowPageLeave = true; // Allow navigation for this action
+        document.getElementById('formAction').value = 'next';
+        document.getElementById('quizForm').submit();
+    } else {
+        // Show a more user-friendly alert
+        alert('⚠️ Please select an answer before proceeding.\n\nIf you want to skip this question, use "Mark for Review" instead.');
+    }
+}
+
+function clearSelection() {
+    // Clear the selected radio button
+    const selectedAnswer = document.querySelector('input[name="answer"]:checked');
+    if (selectedAnswer) {
+        selectedAnswer.checked = false;
+        
+        // Submit form to clear the answer on the server
+        allowPageLeave = true; // Allow navigation for this action
+        document.getElementById('formAction').value = 'clear_answer';
+        document.getElementById('quizForm').submit();
+    } else {
+        alert('ℹ️ No answer is currently selected to clear.');
+    }
+}
+
+function navigateToQuestion(index) {
+    allowPageLeave = true; // Allow navigation for question jumping
+    let form = document.createElement('form');
+    form.method = 'POST';
+    form.innerHTML = `
+        {% csrf_token %}
+        <input type="hidden" name="action" value="jump_to">
+        <input type="hidden" name="question_index" value="${index}">
+    `;
+    document.body.appendChild(form);
+    form.submit();
+}
+
+function submitQuiz() {
+    const unattempted = {{ unattempted_count }};
+    let message = 'Are you sure you want to submit the quiz?';
+    
+    if (unattempted > 0) {
+        message += `\n\n⚠️ Warning: You have ${unattempted} unattempted question${unattempted === 1 ? '' : 's'}.`;
+    }
+    
+    message += '\n\nYou cannot change your answers after submission.';
+    
+    if (confirm(message)) {
+        allowPageLeave = true; // Allow navigation for quiz submission
+        window.location.href = '{% url "quiz:quiz_results" quiz.id %}';
+    }
+}
+
+// Auto-focus on first input
+document.addEventListener('DOMContentLoaded', function() {
+    const firstInput = document.querySelector('input[type="radio"]');
+    if (firstInput && !document.querySelector('input[type="radio"]:checked')) {
+        firstInput.focus();
+    }
+});
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    // For multiple choice, allow number keys to select options
+    if (e.key >= '1' && e.key <= '9') {
+        const options = document.querySelectorAll('input[type="radio"]');
+        const index = parseInt(e.key) - 1;
+        if (options[index]) {
+            options[index].checked = true;
+        }
+    }
+    
+    // Allow Enter to submit
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        saveAndNext(); // Use saveAndNext to properly handle page leave
+    }
+});
+
+// Enhanced page leave warning - only warn for accidental navigation
+window.addEventListener('beforeunload', function(e) {
+    // Only show warning if user is not intentionally navigating via our buttons
+    if (!allowPageLeave) {
+        e.preventDefault();
+        e.returnValue = 'Are you sure you want to leave? Your quiz progress will be lost if you haven\'t saved your answers.';
+        return 'Are you sure you want to leave? Your quiz progress will be lost if you haven\'t saved your answers.';
+    }
+});
+
+// Also handle form submissions to allow navigation
+document.getElementById('quizForm').addEventListener('submit', function() {
+    allowPageLeave = true;
+});
+
+// Handle previous button navigation
+function navigatePrevious() {
+    allowPageLeave = true;
+    let previousIndex = {{ current_index }} - 1;
+    if (previousIndex >= 0) {
+        navigateToQuestion(previousIndex);
+    }
+}
+</script>
+
+<style>
+.question-nav-btn {
+    font-size: 0.75rem;
+    padding: 0.25rem;
+}
+
+.sticky-top {
+    position: -webkit-sticky;
+    position: sticky;
+}
+</style>
+{% endblock %}

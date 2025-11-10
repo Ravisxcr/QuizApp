@@ -1,0 +1,180 @@
+{% extends 'quiz/base.html' %}
+
+{% block title %}Start Quiz - Quiz App{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4><i class="fas fa-play"></i> Start Quiz</h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        {% if is_book_quiz %}
+                            <h5><i class="fas fa-book"></i> {{ book.title }}</h5>
+                            <h6 class="text-muted">by {{ book.author }}</h6>
+                            {% if book.description %}
+                            <p>{{ book.description }}</p>
+                            {% endif %}
+                            
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i>
+                                <strong>Book Quiz:</strong> Questions from all chapters
+                                <br>
+                                <small class="text-muted">
+                                    Difficulty levels: 
+                                    Easy ({{ easy_count }}),
+                                    Medium ({{ medium_count }}),
+                                    Hard ({{ hard_count }})
+                                </small>
+                            </div>
+                        {% else %}
+                            <h5>{{ chapter.book.title }}</h5>
+                            <h6 class="text-muted">Chapter {{ chapter.chapter_number }}: {{ chapter.title }}</h6>
+                            {% if chapter.description %}
+                            <p>{{ chapter.description }}</p>
+                            {% endif %}
+                            
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i>
+                                <strong>Available Questions:</strong> {{ chapter.questions.count }} total
+                                <br>
+                                <small class="text-muted">
+                                    Difficulty levels: 
+                                    Easy ({{ easy_count }}),
+                                    Medium ({{ medium_count }}),
+                                    Hard ({{ hard_count }})
+                                </small>
+                            </div>
+                        {% endif %}
+                        
+                        <div class="alert alert-warning">
+                            <i class="fas fa-calculator"></i>
+                            <strong>Scoring System:</strong>
+                            <br>
+                            <small>
+                                • <span class="text-success"><strong>+1 point</strong></span> for each correct answer<br>
+                                • <span class="text-danger"><strong>-0.25 points</strong></span> for each wrong answer<br>
+                                • <span class="text-muted"><strong>0 points</strong></span> for unattempted questions
+                            </small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                {% if is_book_quiz %}
+                                    <h6><i class="fas fa-book"></i> Book Quiz Info</h6>
+                                    <p class="small mb-1"><strong>Title:</strong> {{ book.title }}</p>
+                                    <p class="small mb-1"><strong>Author:</strong> {{ book.author }}</p>
+                                    <p class="small mb-0"><strong>Chapters:</strong> {{ book.chapters.count }}</p>
+                                {% else %}
+                                    <h6><i class="fas fa-book"></i> Chapter Quiz Info</h6>
+                                    <p class="small mb-1"><strong>Book:</strong> {{ chapter.book.title }}</p>
+                                    <p class="small mb-1"><strong>Author:</strong> {{ chapter.book.author }}</p>
+                                    <p class="small mb-0"><strong>Chapter:</strong> {{ chapter.chapter_number }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <!-- Hidden fields based on quiz type -->
+                    {% if is_book_quiz %}
+                        {{ form.book.as_hidden }}
+                        {{ form.quiz_type.as_hidden }}
+                    {% else %}
+                        {{ form.chapter.as_hidden }}
+                        {{ form.quiz_type.as_hidden }}
+                    {% endif %}
+                    
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="{{ form.num_questions.id_for_label }}" class="form-label">Number of Questions</label>
+                                {{ form.num_questions }}
+                                <div class="form-text">
+                                    {% if is_book_quiz %}
+                                        Total available: {{ easy_count|add:medium_count|add:hard_count }} questions
+                                    {% else %}
+                                        Total available: {{ chapter.questions.count }} questions
+                                    {% endif %}
+                                </div>
+                                {% if form.num_questions.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.num_questions.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="{{ form.difficulty.id_for_label }}" class="form-label">Difficulty Level</label>
+                                {{ form.difficulty }}
+                                <div class="form-text">{{ form.difficulty.help_text }}</div>
+                                {% if form.difficulty.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.difficulty.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="{{ form.duration_minutes.id_for_label }}" class="form-label">Duration</label>
+                                {{ form.duration_minutes }}
+                                <div class="form-text">{{ form.duration_minutes.help_text }}</div>
+                                {% if form.duration_minutes.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.duration_minutes.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label class="form-label">&nbsp;</label>
+                                <div>
+                                    <button type="submit" class="btn btn-success w-100">
+                                        <i class="fas fa-play"></i> Start Quiz
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+                
+                <div class="text-center mt-3">
+                    <a href="{% url 'quiz:quiz_list' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Quiz List
+                    </a>
+                    {% if not is_book_quiz and chapter %}
+                        <a href="{% url 'quiz:chapter_questions' chapter.id %}" class="btn btn-outline-info">
+                            <i class="fas fa-eye"></i> Preview Chapter Questions
+                        </a>
+                    {% elif is_book_quiz and book %}
+                        <a href="{% url 'quiz:books_list' %}" class="btn btn-outline-info">
+                            <i class="fas fa-eye"></i> View Book Details
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

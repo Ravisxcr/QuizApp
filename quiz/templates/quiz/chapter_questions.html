@@ -1,0 +1,137 @@
+{% extends 'quiz/base.html' %}
+
+{% block title %}{{ chapter.title }} - Questions - Quiz App{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4><i class="fas fa-question-circle"></i> Questions Preview</h4>
+                        <h6 class="text-muted mb-0">{{ chapter.book.title }} - Chapter {{ chapter.chapter_number }}: {{ chapter.title }}</h6>
+                    </div>
+                    <div>
+                        {% if page_obj %}
+                        <a href="{% url 'quiz:start_quiz' chapter.id %}" class="btn btn-success">
+                            <i class="fas fa-play"></i> Take Quiz
+                        </a>
+                        {% endif %}
+                        <a href="{% url 'quiz:books_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if chapter.description %}
+                <div class="alert alert-info">
+                    <strong>Chapter Description:</strong> {{ chapter.description }}
+                </div>
+                {% endif %}
+                
+                {% if page_obj %}
+                    <div class="mb-3">
+                        <span class="badge bg-primary">{{ page_obj.paginator.count }} total questions</span>
+                        <span class="badge bg-success">{{ easy_count }} easy</span>
+                        <span class="badge bg-warning">{{ medium_count }} medium</span>
+                        <span class="badge bg-danger">{{ hard_count }} hard</span>
+                    </div>
+                    
+                    {% for question in page_obj %}
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0">
+                                    Question {{ forloop.counter|add:page_obj.start_index|add:"-1" }}
+                                </h6>
+                                <div>
+                                    <span class="badge bg-{% if question.difficulty == 'easy' %}success{% elif question.difficulty == 'medium' %}warning{% else %}danger{% endif %}">
+                                        {{ question.get_difficulty_display }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <p><strong>{{ question.question_text }}</strong></p>
+                            
+                            {% if question.options %}
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h6>Options:</h6>
+                                        {% for key, option in question.options.items %}
+                                        <div class="form-check">
+                                            <label class="form-check-label">
+                                                <strong>{{ key }}.</strong> {{ option }}
+                                            </label>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="alert alert-success">
+                                            <strong>Correct Answer:</strong> {{ question.correct_answer }}
+                                        </div>
+                                    </div>
+                                </div>
+                            {% else %}
+                                <div class="alert alert-success">
+                                    <strong>Correct Answer:</strong> {{ question.correct_answer }}
+                                </div>
+                            {% endif %}
+                            
+                            {% if question.explanation %}
+                            <div class="alert alert-info mt-2">
+                                <strong>Explanation:</strong> {{ question.explanation }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                    
+                    <!-- Pagination -->
+                    {% if page_obj.has_other_pages %}
+                    <nav aria-label="Questions pagination">
+                        <ul class="pagination justify-content-center">
+                            {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page=1">First</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                                </li>
+                            {% endif %}
+                            
+                            <li class="page-item active">
+                                <span class="page-link">
+                                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                                </span>
+                            </li>
+                            
+                            {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Last</a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+                    
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-question-circle fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No questions available</h5>
+                        <p class="text-muted">This chapter doesn't have any questions yet.</p>
+                        <a href="{% url 'quiz:upload_questions' %}" class="btn btn-primary">
+                            <i class="fas fa-upload"></i> Upload Questions
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
