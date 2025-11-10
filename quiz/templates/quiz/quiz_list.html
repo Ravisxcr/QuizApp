@@ -1,0 +1,175 @@
+{% extends 'quiz/base.html' %}
+
+{% block title %}Available Quizzes - Quiz App{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h4><i class="fas fa-play"></i> Available Quizzes</h4>
+            </div>
+            <div class="card-body">
+                {% if books or chapters %}
+                    <!-- Book Quizzes Section -->
+                    {% if books %}
+                    <div class="mb-4">
+                        <h5><i class="fas fa-book"></i> Book Quizzes</h5>
+                        <p class="text-muted small">Take comprehensive quizzes covering all chapters in a book</p>
+                        <div class="row">
+                            {% for book in books %}
+                            <div class="col-md-6 col-lg-4 mb-3">
+                                <div class="card border-primary">
+                                    <div class="card-body">
+                                        <h5 class="card-title text-primary">
+                                            <i class="fas fa-book"></i> {{ book.title }}
+                                        </h5>
+                                        <h6 class="card-subtitle mb-2 text-muted">by {{ book.author }}</h6>
+                                        <p class="card-text">
+                                            {% if book.description %}
+                                                {{ book.description|truncatewords:15 }}
+                                            {% else %}
+                                                Complete book quiz covering all chapters.
+                                            {% endif %}
+                                        </p>
+                                        <div class="mb-2">
+                                            <small class="text-muted">
+                                                <i class="fas fa-layer-group"></i> {{ book.chapters.count }} chapters
+                                                <br>
+                                                <i class="fas fa-question-circle"></i> Questions from all chapters
+                                            </small>
+                                        </div>
+                                        <a href="{% url 'quiz:start_book_quiz' book.id %}" class="btn btn-primary btn-sm">
+                                            <i class="fas fa-play"></i> Start Book Quiz
+                                        </a>
+                                        <a href="{% url 'quiz:books_list' %}" class="btn btn-outline-secondary btn-sm">
+                                            <i class="fas fa-eye"></i> View Details
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <hr>
+                    {% endif %}
+
+                    <!-- Chapter Quizzes Section -->
+                    {% if chapters %}
+                    <div>
+                        <h5><i class="fas fa-book-open"></i> Chapter Quizzes</h5>
+                        <p class="text-muted small">Take focused quizzes on specific chapters</p>
+                        <div class="row">
+                            {% for chapter in chapters %}
+                            <div class="col-md-6 col-lg-4 mb-3">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="card-title">{{ chapter.book.title }}</h5>
+                                        <h6 class="card-subtitle mb-2 text-muted">Chapter {{ chapter.chapter_number }}: {{ chapter.title }}</h6>
+                                        <p class="card-text">
+                                            {% if chapter.description %}
+                                                {{ chapter.description|truncatewords:15 }}
+                                            {% else %}
+                                                {{ chapter.book.description|truncatewords:15|default:"No description available." }}
+                                            {% endif %}
+                                        </p>
+                                        <div class="mb-2">
+                                            <small class="text-muted">
+                                                <i class="fas fa-question-circle"></i> {{ chapter.questions.count }} questions available
+                                            </small>
+                                        </div>
+                                        <a href="{% url 'quiz:start_quiz' chapter.id %}" class="btn btn-success btn-sm">
+                                            <i class="fas fa-play"></i> Start Chapter Quiz
+                                        </a>
+                                        <a href="{% url 'quiz:chapter_questions' chapter.id %}" class="btn btn-outline-secondary btn-sm">
+                                            <i class="fas fa-eye"></i> Preview
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-question-circle fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No quizzes available</h5>
+                        <p class="text-muted">There are no chapters with questions yet.</p>
+                        <a href="{% url 'quiz:upload_questions' %}" class="btn btn-primary">
+                            <i class="fas fa-upload"></i> Upload Questions
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if user.is_authenticated %}
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-history"></i> Your Recent Quiz History</h5>
+            </div>
+            <div class="card-body">
+                {% if user.is_authenticated %}
+                    {% with recent_quizzes=user.quiz_set.all|slice:":5" %}
+                    {% if recent_quizzes %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Quiz</th>
+                                        <th>Score</th>
+                                        <th>Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for quiz in recent_quizzes %}
+                                    <tr>
+                                        <td>{{ quiz.title }}</td>
+                                        <td>
+                                            {% if quiz.score %}
+                                                <span class="badge bg-{% if quiz.score >= 80 %}success{% elif quiz.score >= 60 %}warning{% else %}danger{% endif %}">
+                                                    {{ quiz.score|floatformat:0 }}%
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">In Progress</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ quiz.start_time|date:"M d, Y" }}</td>
+                                        <td>
+                                            {% if quiz.is_completed %}
+                                                <a href="{% url 'quiz:quiz_results' quiz.id %}" class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-eye"></i> View
+                                                </a>
+                                            {% else %}
+                                                <a href="{% url 'quiz:take_quiz' quiz.id %}" class="btn btn-sm btn-primary">
+                                                    <i class="fas fa-play"></i> Continue
+                                                </a>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <a href="{% url 'quiz:quiz_history' %}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-history"></i> View Full History
+                        </a>
+                    {% else %}
+                        <p class="text-muted">No quiz history yet. Take your first quiz!</p>
+                    {% endif %}
+                    {% endwith %}
+                {% else %}
+                    <p class="text-muted">Please log in to view your quiz history.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

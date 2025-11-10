@@ -1,0 +1,95 @@
+{% extends 'quiz/base.html' %}
+
+{% block title %}Upload Questions - Quiz App{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4><i class="fas fa-upload"></i> Upload Questions via JSON</h4>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.chapter.id_for_label }}" class="form-label">Chapter *</label>
+                        {{ form.chapter }}
+                        <div class="form-text">{{ form.chapter.help_text }}</div>
+                        {% if form.chapter.errors %}
+                            <div class="text-danger">
+                                {% for error in form.chapter.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.questions_json.id_for_label }}" class="form-label">Questions JSON *</label>
+                        {{ form.questions_json }}
+                        <div class="form-text">{{ form.questions_json.help_text }}</div>
+                        {% if form.questions_json.errors %}
+                            <div class="text-danger">
+                                {% for error in form.questions_json.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-upload"></i> Upload Questions
+                    </button>
+                    <a href="{% url 'quiz:home' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back
+                    </a>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-info-circle"></i> JSON Format Guide</h5>
+            </div>
+            <div class="card-body">
+                <h6>Format 1 (Your Format):</h6>
+                <ul>
+                    <li><code>question</code> - The question text</li>
+                    <li><code>options</code> - Answer choices (for multiple choice)</li>
+                    <li><code>answer</code> - Correct answer</li>
+                    <li><code>difficulty</code> - 1-2 (easy), 3 (medium), 4-5 (hard)</li>
+                </ul>
+                
+                <h6>Format 2 (Extended Format):</h6>
+                <ul>
+                    <li><code>question_text</code> - The question</li>
+                    <li><code>correct_answer</code> - Correct answer</li>
+                    <li><code>options</code> - Multiple choice options (required)</li>
+                    <li><code>explanation</code> - Answer explanation</li>
+                    <li><code>difficulty</code> - easy, medium, hard</li>
+                </ul>
+                
+                <p><strong>Note:</strong> All questions are treated as multiple choice. The <code>options</code> field is required and should contain answer choices.</p>
+                
+                <h6>Example (Your Format):</h6>
+                <pre class="bg-light p-2 small"><code>[
+  {
+    "question": "What is 2+2?",
+    "options": {
+      "A": "3",
+      "B": "4", 
+      "C": "5"
+    },
+    "answer": "B",
+    "difficulty": 2
+  }
+]</code></pre>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

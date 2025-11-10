@@ -1,0 +1,70 @@
+[
+    {
+        "question_text": "What is the capital of France?",
+        "question_type": "multiple_choice",
+        "options": {
+            "A": "London",
+            "B": "Berlin", 
+            "C": "Paris",
+            "D": "Madrid"
+        },
+        "correct_answer": "C",
+        "explanation": "Paris is the capital and largest city of France.",
+        "difficulty": "easy"
+    },
+    {
+        "question_text": "Python is a compiled language.",
+        "question_type": "true_false",
+        "options": {
+            "True": "True",
+            "False": "False"
+        },
+        "correct_answer": "False",
+        "explanation": "Python is an interpreted language, not compiled.",
+        "difficulty": "medium"
+    },
+    {
+        "question_text": "What is the largest planet in our solar system?",
+        "question_type": "short_answer",
+        "correct_answer": "Jupiter",
+        "explanation": "Jupiter is the largest planet in our solar system by mass and volume.",
+        "difficulty": "easy"
+    },
+    {
+        "question_text": "Which programming paradigm does Python primarily support?",
+        "question_type": "multiple_choice",
+        "options": {
+            "A": "Object-oriented programming",
+            "B": "Functional programming",
+            "C": "Procedural programming", 
+            "D": "All of the above"
+        },
+        "correct_answer": "D",
+        "explanation": "Python is a multi-paradigm programming language that supports object-oriented, functional, and procedural programming styles.",
+        "difficulty": "medium"
+    },
+    {
+        "question_text": "The keyword 'lambda' in Python is used to create anonymous functions.",
+        "question_type": "true_false",
+        "options": {
+            "True": "True",
+            "False": "False"
+        },
+        "correct_answer": "True",
+        "explanation": "Lambda functions are small anonymous functions that can have any number of arguments but can only have one expression.",
+        "difficulty": "medium"
+    },
+    {
+        "question_text": "What is the time complexity of accessing an element by index in a Python list?",
+        "question_type": "multiple_choice",
+        "options": {
+            "A": "O(1)",
+            "B": "O(n)",
+            "C": "O(log n)",
+            "D": "O(n²)"
+        },
+        "correct_answer": "A",
+        "explanation": "Lists in Python are implemented as dynamic arrays, so accessing an element by index is O(1) constant time.",
+        "difficulty": "hard"
+    }
+]
